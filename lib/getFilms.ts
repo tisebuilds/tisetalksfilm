@@ -54,7 +54,12 @@ export async function getFilms(): Promise<{ films: Film[]; error?: string }> {
 
     const xml = await res.text();
     const cleaned = stripXmlNamespaces(xml);
-    const parser = new XMLParser({ ignoreAttributes: false, trimValues: true });
+    const parser = new XMLParser({
+      ignoreAttributes: false,
+      trimValues: true,
+      processEntities: true,
+      htmlEntities: true,
+    });
     const doc = parser.parse(cleaned) as Record<string, unknown>;
     const rss = doc.rss as Record<string, unknown> | undefined;
     const channel = rss?.channel as Record<string, unknown> | undefined;
