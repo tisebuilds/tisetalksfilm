@@ -36,7 +36,7 @@ export function FilmNavButtons({ selectedId }: FilmNavButtonsProps) {
     >
       {NAV_FILMS.map((film) => {
         const isSelected = film.id === selectedId;
-        const href = isSelected ? "/" : `/films/${film.id}`;
+        const href = isSelected ? "/" : `/${film.id}`;
         return (
           <Link
             key={film.id}
