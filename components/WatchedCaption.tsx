@@ -1,34 +1,22 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { Film } from "@/types/film";
-import { FilmPosterPopover } from "@/components/FilmPosterPopover";
 
 interface WatchedCaptionProps {
-  films: Film[];
+  film: Film | null;
+  onPosterHover?: (hovered: boolean) => void;
 }
 
-const ROTATE_MS = 3500;
 const TITLE_EASE = [0.22, 1, 0.36, 1] as const;
 const TITLE_TRANSITION = { duration: 0.45, ease: TITLE_EASE };
 const TITLE_CLASS =
-  "whitespace-nowrap text-white underline decoration-dotted decoration-white/50 underline-offset-4";
+  "whitespace-nowrap underline decoration-dotted decoration-white/40 underline-offset-4";
 
-export function WatchedCaption({ films }: WatchedCaptionProps) {
-  const [index, setIndex] = useState(0);
+export function WatchedCaption({ film, onPosterHover }: WatchedCaptionProps) {
   const measureRef = useRef<HTMLSpanElement>(null);
   const [titleWidth, setTitleWidth] = useState<number>();
-
-  useEffect(() => {
-    if (films.length <= 1) return;
-    const id = setInterval(() => {
-      setIndex((i) => (i + 1) % films.length);
-    }, ROTATE_MS);
-    return () => clearInterval(id);
-  }, [films.length]);
-
-  const film = films[index];
 
   useLayoutEffect(() => {
     if (!film || !measureRef.current) return;
@@ -37,45 +25,50 @@ export function WatchedCaption({ films }: WatchedCaptionProps) {
 
   if (!film) {
     return (
-      <div className="fixed bottom-8 left-1/2 z-40 w-full max-w-[90vw] -translate-x-1/2 text-center">
-        <p className="font-serif text-lg text-white/60 sm:text-xl">I just watched&hellip;</p>
-      </div>
+      <p className="vhs-text text-center text-lg text-white/70 sm:text-xl md:text-2xl">
+        I&apos;ve watched&hellip;
+      </p>
     );
   }
 
   return (
-    <div className="fixed bottom-8 left-1/2 z-40 w-full max-w-[90vw] -translate-x-1/2 text-center">
-      <p className="flex items-baseline justify-center font-serif text-lg text-white/90 sm:text-xl">
-        <span>I&apos;ve watched&nbsp;</span>
-        <motion.span
-          className="relative inline-block"
-          initial={false}
-          animate={{ width: titleWidth }}
-          transition={TITLE_TRANSITION}
+    <p className="vhs-text flex flex-wrap items-baseline justify-center px-6 text-center text-lg sm:text-xl md:text-2xl">
+      <span>I&apos;ve watched&nbsp;</span>
+      <motion.span
+        className="relative inline-block"
+        initial={false}
+        animate={{ width: titleWidth }}
+        transition={TITLE_TRANSITION}
+      >
+        <span
+          ref={measureRef}
+          aria-hidden
+          className={`pointer-events-none invisible absolute left-0 top-0 ${TITLE_CLASS}`}
         >
-          <span
-            ref={measureRef}
-            aria-hidden
-            className={`pointer-events-none invisible absolute left-0 top-0 ${TITLE_CLASS}`}
+          {film.filmTitle}
+        </span>
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.span
+            key={film.guid}
+            initial={{ opacity: 0, y: 6, filter: "blur(4px)" }}
+            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            exit={{ opacity: 0, y: -6, filter: "blur(4px)" }}
+            transition={TITLE_TRANSITION}
+            className="inline-block"
           >
-            {film.filmTitle}
-          </span>
-          <AnimatePresence mode="popLayout" initial={false}>
-            <motion.span
-              key={film.guid}
-              initial={{ opacity: 0, y: 6, filter: "blur(4px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              exit={{ opacity: 0, y: -6, filter: "blur(4px)" }}
-              transition={TITLE_TRANSITION}
-              className="inline-block"
+            <span
+              tabIndex={0}
+              className={`cursor-default outline-none ${TITLE_CLASS}`}
+              onMouseEnter={() => onPosterHover?.(true)}
+              onMouseLeave={() => onPosterHover?.(false)}
+              onFocus={() => onPosterHover?.(true)}
+              onBlur={() => onPosterHover?.(false)}
             >
-              <FilmPosterPopover film={film} className={TITLE_CLASS}>
-                {film.filmTitle}
-              </FilmPosterPopover>
-            </motion.span>
-          </AnimatePresence>
-        </motion.span>
-      </p>
-    </div>
+              {film.filmTitle}
+            </span>
+          </motion.span>
+        </AnimatePresence>
+      </motion.span>
+    </p>
   );
 }
